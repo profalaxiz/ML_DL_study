@@ -7,15 +7,17 @@ train_x = np.array([[2104, 5, 1, 45],
 train_y = np.array([460., 232., 178.])
 
 """
-f_wb[i] = dot(x[i], w) + b
+the prediction now depends on more than one feature
+f_wb[i] = dot(x[i], w) + b  (y_hat = w1*x1 + w2*x2 + w3*x3 + w4*x4 + b)
+y_hat = Xw + b 
 """
 def hyp_func(x, w, b):
+    # return x @ w + b  -> vectorization (w is broadcasted for matrix multiplication)
     m = x.shape[0]
     f_wb = np.zeros(m)
     for i in range(m):
         f_wb[i] = np.dot(x[i], w) + b
-    return f_wb
-    # return x @ w + b    
+    return f_wb    
 
 w_test1 = np.array([0.39, 18.75, -53, -26.])
 b_test1 = 785.18
@@ -38,6 +40,13 @@ def cost_func(x, y, w, b):
 
 J_wb_test1 = cost_func(train_x, train_y, w_test1, b_test1)
 print(f"cost function (w = {w_test1.tolist()}, b = {b_test1}): J = {J_wb_test1:.2f}")
+
+def vectorized_cost_func(X, y, w, b):
+    m = X.shape[0]
+    f_wb = X @ w + b
+    errors = f_wb - y
+    cost = np.sum(errors**2) / (2*m)
+    return cost
 
 """
 dj_dw = 1/m * sigma(i=1, i=m)(sigma(i=1, i=n)error*x[i,j])
@@ -105,3 +114,19 @@ print(f"final cost function: {J_final}")
 
 f_wb_final = hyp_func(train_x_scaled, w_final2, b_final2)
 print(f"final predictions: {f_wb_final.tolist()}")
+
+
+"""
+closed form solution, is another way to solve linear regression
+works great for small datasets, you don't need to use the learning rate
+w = (X^T * X)^(-1) * X^T * y
+"""
+X = np.array([[1],[2],[3],[4],[5]])
+y = np.array([300, 500, 700, 900, 1100])
+X_b = np.c_[np.ones((X.shape[0], 1)), X]
+def predict(X):
+    w = np.linalg.inv(X.T @ X) @ X.T @ y
+    return X @ w
+result = predict(X_b)
+print(f"using closed form solution, predictions = {result}")
+print(f"target = {y}")

@@ -1,14 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-train_x = np.array([1, 2, 3, 4])
-train_y = np.array([300., 500., 700., 900.])
+train_x = np.array([1, 2, 3, 4], dtype=float)
+train_y = np.array([300, 500, 700, 900], dtype=float)
 
 """
 f_wb[i] = x[i] * w + b
+linear equation, w is the slope (weight), b is the intercept (bias)
 """
 def hyp_func(x, w, b):
-    # return x * w + b
+    # return x * w + b -> numpy vectorization
     m = x.shape[0]
     f_wb = np.zeros(m)
     for i in range(m):
@@ -30,7 +31,12 @@ y_hat_test1 = hyp_func(train_x, w_test1, b_test1)
 # plt.show()
 
 """
-cost function (MSE): J(w,b) = 1/2m * sigma(i=1, i=m)(error)**2; error = y_hat[i] - y[i]
+the real problem is how to choose the right value for w and b
+we can measure how wrong the model is by summing the square errors (prediction - target)
+mean squared error style cost function (MSE): J(w,b) = 1/2m * sigma(i=1, i=m)(error)**2; error = y_hat[i] - y[i]
+small J -> good line (good prediction)
+large J -> bad line (bad prediction)
+so, 'training' means finding {w,b} that minimize J(w,b)
 """
 
 def cost_func(x, y, w, b):
@@ -57,13 +63,17 @@ def cost_func(x, y, w, b):
 # print(f"cost function (w = {w_test4}, b = {b_test4}): J = {J_wb_test4:.2f}")
 
 """
-batch gradient descent
+to improve w and b, we now need to use gradient descent algorithm
+the intuition is that gradient tells us which direction increases the cost, so we subtract the gradients (dj_dw,dj_db) to move toward lower cost
+
+batch gradient descent computes the gradient of the cost function using the entire training dataset for each iteration
 
 dj_dw = 1/m * sigma(i=1, i=m)(error)*x[i]
 dj_db = 1/m * sigma(i=1, i=m)(error)
-
 w = w - alpha*dj_dw
 b = b - alpha*dj_db
+
+vectorized: dj_dw = 1/m * X.T(error)
 """
 def par_deriv(x, y, w, b):
     m = x.shape[0]
@@ -75,6 +85,14 @@ def par_deriv(x, y, w, b):
         dj_db += error
     dj_dw /= m
     dj_db /= m
+    return dj_dw, dj_db
+
+def vectorized_par_deriv(X, y, w, b):
+    m = X.shape[0]
+    f_wb = X @ w + b
+    error = f_wb - y
+    dj_dw = (X.T @ error) / m
+    dj_db = np.sum(error) / m
     return dj_dw, dj_db
 
 def grad_desc(x, y, w, b, iterations, alpha):

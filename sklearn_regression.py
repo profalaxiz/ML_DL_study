@@ -1,7 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, LogisticRegression, SGDRegressor, SGDClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression, SGDRegressor
 from sklearn.preprocessing import StandardScaler
+
+# simple linear regression model
+X1 = np.array([[1], [2], [3], [4]])
+y1 = np.array([300, 500, 700, 900])
+model1 = LinearRegression()
+model1.fit(X1, y1)
+print(f"w = {model1.coef_}, b = {model1.intercept_}")
+print(f"prediction for x = 5: {model1.predict([[5]])}")
+
+# simple logistic regression model
+X2 = np.array([[1], [2], [3], [4], [5]])
+y2 = np.array([0, 0, 0, 1, 1])
+model2 = LogisticRegression()
+model2.fit(X2, y2)
+print(f"w = {model2.coef_}, b = {model2.intercept_}")
+print(f"class prediction for x = 2.5: {model2.predict([[2.5]])}")
+print(f"probabilities prediction for x = 2.5: {model2.predict_proba([[2.5]])}")  # [P(class 0), P(class 1)]
+
 
 train_x = np.array([[1003, 2133, 321], 
                    [4321, 3214, 1999],
@@ -9,11 +27,22 @@ train_x = np.array([[1003, 2133, 321],
 train_y = np.array([42, 21, 19])
 train_y2 = np.array([0, 1, 1])
 
+
 # z-score normalization
 # linear regression model
-scaler = StandardScaler()
+"""
+linear/logistic regression trained with gradient-based optimization can benefit greatly from scaling
+standardization: z = (x - mean) / std deviation , features become centered around mean ~ 0 and std dev ~ 1
+"""
+scaler = StandardScaler()  
 X_norm = scaler.fit_transform(train_x)
-# fit + train model
+"""
+fit_transform():
+    fit: learn the mean and std deviation from training data
+    transform: use them to scale training data
+transform():
+    do not fit again, used with test data
+"""
 sgd = SGDRegressor(max_iter=1000)       # or i could use LinearRegression() for a closed-form solution
 sgd.fit(X_norm, train_y)
 print(f"number of iterations: {sgd.n_iter_}")
@@ -34,12 +63,3 @@ b2 = lr_model.intercept_
 print(f"lr w = {w2}, b = {b2}")
 y2_pred = lr_model.predict(X_norm)
 print(f"accuracy: {lr_model.score(train_x, train_y2)*100:.2f}%")
-
-
-# # short summary
-# x_normalized = scaler.fit_transform(x_train)
-# model = SGDClassifier(max_iter=1000)
-# model.fit(x_normalized, y_train)
-# y_pred = model.predict(x_test_normalized)
-# y_pred = (y_pred >= 0.5).astype(int)
-# accuracy = model.score(x_train, y_train) * 100

@@ -1,47 +1,62 @@
 import numpy as np
 
-train_x = np.array([0, 1, 2, 3, 4, 5])
-train_y = np.array([0, 0, 0, 1, 1, 1])
+train_x = np.array([[0], [1], [2], [3], [4], [5]], dtype=float)
+train_y = np.array([0, 0, 0, 1, 1, 1], dtype=float)
 
 """
+logistic regression is passing a linear regression function into a sigmoid function, to produce valid probabilities (predictions) between 0 and 1
 sigmoid function: f(z) = 1 / 1+exp(-z)
+sigmoid converts any real number into probability between 0 ... 1
+example if probability = 0.75, then that means P(y=1 | x) ~ 0.75
+so we should a threshold, commonly 0.5, if probability >= 0.5 then prediction = 1 otherwise prediction = 0
 """
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 """
-f_wb(x) = g(w.x + b)
+f_wb(x) = g(Xw + b)
 """
-def hyp_func(x, w, b):
-    # z = np.dot(x, w) + b
-    m, n = x.shape
+def hyp_func(X, w, b):
+    # return sigmoid(X @ w + b)
+    m, n = X.shape
     f_wb = np.zeros(m)
     for i in range(m):
         z_wb = 0
         for j in range(n):
-            z_wb_ij = x[i, j] * w[j]
+            z_wb_ij = X[i, j] * w[j]
             z_wb += z_wb_ij
         z_wb += b
         f_wb[i] = sigmoid(z_wb) 
     return f_wb
 
-w_test1 = 0.5
+w_test1 = np.array([[0.5]])
 b_test1 = -1
 f_wb_test1 = hyp_func(train_x, w_test1, b_test1)
 print(f_wb_test1.tolist())
+predictions1 = (f_wb_test1 >= 0.5).astype(int)
+print(predictions1)
 
 """"
-loss(f_wb[i], y[i]) = -y[i]*log(f_wb[i]) - (1 - y[i])*log(1 - f_wb[i]); f_wb=sigmoid(wx+b)
+binary cross-entropy/log loss(f_wb[i], y[i]) = -y[i]*log(f_wb[i]) - (1 - y[i])*log(1 - f_wb[i]); f_wb=sigmoid(wx+b)
+why not use MSE? because MSE penalises very confident misclassifications much less harshly than the cross-entropy metric does, 
+combining the non-linear [0, 1] sigmoid function with MSE creates a non convex cost function with multiple local minima, 
+preventing gradient descent from reliably finding the global optimum
 cost: J(w,b) = 1/m * sigma(i=1, i=m)(loss(f_wb[i], y[i]))
 """
 def cost_func(x, y, w, b):
     m = x.shape[0]
     f_wb = hyp_func(x, w, b)
-    f_wb = np.clip(f_wb, 1e-15, 1 - 1e-15)
+    f_wb = np.clip(f_wb, 1e-15, 1 - 1e-15)  # to avoid log zero errors
     cost = 0.
     for i in range(m):
         loss = -y[i]*np.log(f_wb[i]) - (1 - y[i]) * np.log(1 - f_wb[i])
         cost += loss
     cost /= m
+    return cost
+
+def vectorized_cost_func(X, y, w, b):
+    f_wb = sigmoid(X @ w + b)
+    f_wb = np.clip(f_wb, 1e-15, 1 - 1e-15)
+    cost = -np.mean(y*np.log(f_wb) + (1-y)*np.log(1-f_wb))
     return cost
 
 train_x2 = np.array([[0.5, 1.5], [1,1], [1.5, 0.5], [3, 0.5], [2, 2], [1, 2.5]])
@@ -64,6 +79,14 @@ def par_deriv(x, y, w, b):
         dj_db += error
     dj_dw /= m
     dj_db /= m
+    return dj_dw, dj_db
+
+def vectorized_par_deriv(X, y, w, b):
+    m = X.shape[0]
+    f_wb = sigmoid(X @ w + b)
+    errors = f_wb - y
+    dj_dw = X.T @ errors / m
+    dj_db = np.sum(errors) / m
     return dj_dw, dj_db
 
 def grad_desc(x, y, w, b, iterations, alpha):
