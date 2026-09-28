@@ -1,14 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+"""
+logits z_k = w_k^T * x + b_k, vectorized -> Z = XW + b
+softmax: p_k = exp(z_k) / sum_j(exp(z_j))
+"""
 def softmax(z):
     exp_z = np.exp(z)
     probs = exp_z / np.sum(exp_z, axis=1, keepdims=True) #keepdims=True to keep the result as col so numpy can broadcast it
     return probs    
 
 def hyp_func(X, W, b):
-  # z = (m, n) @ (n, N) = (m, N) = (examples, classes)
+  # z = (m, n) @ (n, k) = (m, k) = (examples, classes)
     z = X @ W + b
     return softmax(z)      # for each row, softmax will convert each of those k scores into probabilies between 0 and 1 that sum up to 1 
 
@@ -28,6 +31,16 @@ def cost_func(X, y, W, b):
     cost /= m
     return cost  # scalar
 
+def vectorized_cost(X, y, W, b):
+    m = X.shape[0]
+    Z = X @ W + b          # (m, K)
+    P = softmax(Z)         # (m, K)
+    # probability assigned to the correct class
+    correct_probs = P[np.arange(m), y]
+    # cross-entropy loss
+    cost = -np.mean(np.log(correct_probs + 1e-15))
+    return cost
+
 def par_deriv(X, y, W, b):
     probs = hyp_func(X, W, b)
     m, n = X.shape
@@ -45,6 +58,18 @@ def par_deriv(X, y, W, b):
     dj_db /= m
     return dj_dW, dj_db
 
+def vectorized_par_der(X, y, W, b):
+    m = X.shape[0]
+    Z = X @ W + b
+    P = softmax(Z)
+    # One-hot encode y
+    Y = np.zeros_like(P)
+    Y[np.arange(m), y] = 1
+    Errors = P - Y             # (m, K)
+    dj_dW = (X.T @ Errors) / m    # (n, K)
+    dj_db = np.mean(Errors, axis=0)  # (K,)
+    return dj_dW, dj_db
+
 def grad_desc(X, y, W, b, iterations, alpha):
     J_history = [cost_func(X, y, W, b)]
     for i in range(iterations):
@@ -59,7 +84,9 @@ def grad_desc(X, y, W, b, iterations, alpha):
                 f"Cost = {cost:.6f}"
             )
     return W, b, J_history
-
+"""
+prediction: y_hat = argmax_k(p_k)
+"""
 def predict(X, W, b):
     probs = hyp_func(X, W, b)  # (m, N)
     predictions = np.argmax(probs, axis=1) 
