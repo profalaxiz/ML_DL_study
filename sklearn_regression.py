@@ -20,13 +20,33 @@ print(f"w = {model2.coef_}, b = {model2.intercept_}")
 print(f"class prediction for x = 2.5: {model2.predict([[2.5]])}")
 print(f"probabilities prediction for x = 2.5: {model2.predict_proba([[2.5]])}")  # [P(class 0), P(class 1)]
 
+# simple softmax regression model
+X3 = np.array([
+    [1.0, 2.0],
+    [1.5, 1.8],
+    [2.0, 1.0],
+    [5.0, 8.0],
+    [6.0, 9.0],
+    [7.0, 8.0],
+    [8.0, 2.0],
+    [9.0, 3.0],
+    [8.0, 4.0]
+])
+y3 = np.array([0, 0, 0,
+              1, 1, 1,
+              2, 2, 2])
+K = 3    # 0, 1, 2
+model3 = LogisticRegression()
+model3.fit(X3, y3)
+print(f"w = {model3.coef_}, b = {model3.intercept_}")
+print(f"class prediction for [8.0, 2.0]: {model3.predict([[8.0, 2.0]])}")
+print(f"probabilities prediction for x = [8.0, 2.0]: {model3.predict_proba([[8.0, 2.0]])}")
 
 train_x = np.array([[1003, 2133, 321], 
                    [4321, 3214, 1999],
                    [2343, 1823, 1230]])
 train_y = np.array([42, 21, 19])
 train_y2 = np.array([0, 1, 1])
-
 
 # z-score normalization
 # linear regression model

@@ -2,10 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 """
+Softmax regression = multiclass classification
+Exactly ONE class is correct for each example
+
+Example:
+cat / dog / bird
+y = [0, 2, 1, 0, ...]
+
+This is different from multilabel classification where multiple labels may simultaneously be correct
+
 logits z_k = w_k^T * x + b_k, vectorized -> Z = XW + b
+softmax converts logits into probabilities that are between 0-1 and that sum to 1
+Softmax is unchanged if the same constant is subtracted from every logit. Subtracting max(z) prevents exp(z) overflow
 softmax: p_k = exp(z_k) / sum_j(exp(z_j))
 """
 def softmax(z):
+    z = z - np.max(z, axis=1,keepdims=True)  # subtracting the maximum  does not change the softmax probabilities
     exp_z = np.exp(z)
     probs = exp_z / np.sum(exp_z, axis=1, keepdims=True) #keepdims=True to keep the result as col so numpy can broadcast it
     return probs    
@@ -15,7 +27,7 @@ def hyp_func(X, W, b):
     z = X @ W + b
     return softmax(z)      # for each row, softmax will convert each of those k scores into probabilies between 0 and 1 that sum up to 1 
 
-""""
+"""
 indicator function 1{y_i == j}: 1 if j is the correct class, 0 otherwise
 J(w,b) = -1/m * sum(i=1, i=m)(sum(j=1, j=N)(indicator function * log(probs[i, j])))
 """
@@ -23,9 +35,9 @@ def cost_func(X, y, W, b):
     probs = hyp_func(X, W, b)
     cost = 0.0
     m = X.shape[0]
-    N = W.shape[1]
+    K = W.shape[1]
     for i in range(m):  
-        for j in range(N):  
+        for j in range(K):  
             indicator = 1 if y[i] == j else 0
             cost += (-indicator * np.log(probs[i, j]))
     cost /= m
@@ -73,10 +85,10 @@ def vectorized_par_der(X, y, W, b):
 def grad_desc(X, y, W, b, iterations, alpha):
     J_history = [cost_func(X, y, W, b)]
     for i in range(iterations):
-        dj_dW, dj_db = par_deriv(X, y, W, b)
+        dj_dW, dj_db = vectorized_par_der(X, y, W, b)
         W = W - alpha * dj_dW
         b = b - alpha * dj_db
-        cost = cost_func(X, y, W, b)
+        cost = vectorized_cost(X, y, W, b)
         J_history.append(cost)
         if i % 100 == 0:
             print(
@@ -105,7 +117,7 @@ X = np.array([
 ])
 y = np.array([0, 0, 0,
               1, 1, 1,
-              2, 2, 2])
+              2, 2, 2])  # integer class label
 num_classes = 3    # 0, 1, 2
 
 m, n = X.shape

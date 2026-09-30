@@ -23,12 +23,42 @@ def hyp_func(X, W, b):
 """
 we calculate binary cross-entropy for every label, so
 """
+def cost_func(X, Y, W, b):
+    m = X.shape[0]
+    k = Y.shape[1]
+    A = hyp_func(X, W, b)
+    A = np.clip(A, 1e-15, 1 - 1e-15)
+    cost = 0.0
+    for i in range(m):          # each example
+        for j in range(k):      # each label
+            y = Y[i, j]
+            a = A[i, j]
+            cost += -(y * np.log(a) +
+                      (1 - y) * np.log(1 - a))
+    cost /= m
+    return cost
+
 def vectorized_cost_func(X, Y, W, b):
     f_wb = hyp_func(X, W, b)
     m = X.shape[0]
     f_wb = np.clip(f_wb, 1e-15, 1 - 1e-15)
     cost = -np.sum(Y*np.log(f_wb) + (1 - Y)*np.log(1 - f_wb)) / m
     return cost
+
+def par_deriv(X, Y, W, b):
+    m, n = X.shape
+    k = Y.shape[1]
+    A = hyp_func(X, W, b)
+    dj_dW = np.zeros((n, k))
+    dj_db = np.zeros((1, k))
+    for i in range(m):              # each example
+        for j in range(k):          # each label
+            error = A[i, j] - Y[i, j]
+            dj_db[0, j] += error
+            for f in range(n):      # each feature
+                dj_dW[f, j] += error * X[i, f]
+    dj_dW /= m
+    dj_db /= m
 
 def vectorized_par_der(X, Y, W, b):
     m = X.shape[0]
@@ -48,8 +78,8 @@ def grad_desc(X, Y, W, b, iterations, alpha):
         b -= alpha * dj_db
         cost_history.append(cost)
 
-        if iterations % 500 == 0:
-            print(f"Epoch {iterations:4d} | Cost = {cost:.6f}")    
+        if i % 500 == 0:
+            print(f"Epoch {i:4d} | Cost = {cost:.6f}")    
     return W, b, cost_history
 
 def predict(X, W, b, threshold):
